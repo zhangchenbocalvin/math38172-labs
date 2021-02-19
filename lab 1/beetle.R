@@ -3,7 +3,7 @@ str(beetle)
 
 # we will fit a simple logistic regression, with log_10(x) as the explanatory variable
 
-# first let us computer the response variable y = proportion of beetles affected by dose x
+# first let us compute the response variable y = proportion of beetles affected by dose x
 y = beetle$affected / beetle$exposed
 print(y)
 
@@ -14,7 +14,7 @@ print(y)
 # data=beetle tells R to look for the vector logdose in the data frame beetle
 fit1 = glm(y~logdose, family=binomial, weights=exposed, data=beetle)
 
-# the coefficient are the following
+# the coefficients are the following
 print(coef(fit1))
 
 # more detailed information is given by the following function
@@ -25,12 +25,11 @@ print(summary(fit1))
 # successes and the second column gives the number of binomial failures
 fit2 = glm(cbind(affected, exposed-affected)~logdose, family=binomial, data=beetle)
 
-# the coefficient are the following
+# the coefficients are the following
 print(coef(fit2))
 
 # more detailed information is given by the following function
 print(summary(fit2))
-
 
 # we can clearly see from the print statements above that the two different ways of specifying the repsponse
 # variable give the same results
