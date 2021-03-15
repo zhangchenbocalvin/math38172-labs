@@ -1,3 +1,22 @@
+u <- function(beta, x, y) {
+  eta <- beta[1] + beta[2]*x
+  mu <- exp(eta)
+  u0 <- sum(y-mu)
+  u1 <- sum(x*(y-mu))
+  c(u0,u1)
+}
+
+FIM <- function(beta, x, m) {
+  eta <- beta[1] + beta[2] * x
+  mu <- exp(eta)
+  M <- matrix(0, ncol = 2, nrow = 2)
+  M[1,1] <- sum(mu)
+  M[1,2] <- sum(mu*x)
+  M[2,1] <- sum(mu*x)
+  M[2,2] <- sum(mu*x^2)
+  return(M)
+}
+
 # inspect the data frame
 str(nminer2)
 
@@ -53,3 +72,20 @@ print(100* (exp(0.11398 + c(-1,1)*qnorm(0.975)*0.01243) - 1))
 
 # method 3 -> calculate the 95% likelihood interval for b_1 and transform the endpoints
 print(100 * (exp(confint(fit)) - 1)[2,])
+
+
+# calculate the estimated asymptotic variance matrix of betah
+x=nminer2$Eucs
+betah = coef(fit)
+print(solve(FIM(beta=betah, x=x)))
+print(vcov(fit))
+
+# without using the glm() function, carry out 15 iterations of Fisher scoring
+y = nminer2$Minerab
+betah = c(0, 0)
+for (i in 1:10) {
+  betah = betah + solve(FIM(beta=betah, x=x, m=m)) %*% u(betah, x, y)
+  cat(betah, "\n")
+}
+print(betah)
+print(coef(fit))
