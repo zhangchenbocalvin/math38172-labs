@@ -1,0 +1,134 @@
+---
+title: "MATH 38172 Generalised Linear Models - Coursework"
+author: "Chen Bo Calvin Zhang"
+output: pdf_document
+---
+
+# Question 1
+
+First we import the dataset into R.
+
+```{r, echo=TRUE}
+data = read.csv("cwkdata.csv")
+print(str(data))
+print(summary(data))
+```
+
+We first notice that the dataset contains 120 observations, with 4 variables each. In this coursework, \texttt{Severe} will be the response variable and \texttt{Anorexia}, \texttt{Lymphocyte} and \texttt{Temperature} will be explanatory variables. \texttt{Severe} indicates whether a patient has a severe condition (1) or not (0). \texttt{Anorexia} indicates whether a patient is anorexic (Yes) or not (No). \texttt{Lymphocyte} is the number of lymphocytes (in billions of cells per litre) in the patient's blood. Lastly, the \texttt{Temperature} variable indicates the patient's body temperature on admission in Celsius degrees.
+
+Both \texttt{Severe} and \texttt{Anorexia} are indicator variables despite one of them storing integer values and the other storing strings of characters. \texttt{Lymphocyte} and \texttt{Temperature} are both numerical variables. The former ranges from 0.492 to 1.880, with a mean of 1.197; the latter has a minimum temperature of 37.03 and a maximal one of 38.64, with a mean of 37.99.
+
+# Question 2
+
+## Part (i)
+
+Because we are trying to predict the probability of patients having severe respiratory disease, we have will use a simple logistic regression. This can be performed in R using the \texttt{glm()} function using the \texttt{binomial} family. In this case, the response variable is \texttt{Severe} and the single explanatory variable \texttt{Anorexia} ($\texttt{Severe} \sim \texttt{Anorexia}$ with the Wilkinson-Rogers notation). The code implementation is shown below.
+
+```{r, echo=TRUE}
+fitA = glm(Severe~Anorexia, family=binomial, data=data)
+print(coef(fitA))
+print(summary(fitA))
+```
+
+As per the SBA example in Lab 1, here we do not need to specify the \texttt{weights} parameter, because the response is binary and R assumes a single trial by default.
+
+## Part (ii)
+
+The fitted model is
+
+$$\begin{aligned}
+\texttt{Severe}_i = Y_i \sim Bernoulli(\mu_i) \\
+\log \frac{\mu_i}{1-\mu_i} = \eta_i = \beta_0 + \beta_1 x_i \\
+\hat{\beta_0} = -1.812379, \quad \hat{\beta_1} = 1.189849
+\end{aligned}$$
+where
+
+* $Y_i$ indicates whether patient $i$ has a severe respiratory disease and follows a Bernoulli distribution with mean $\mu_i$,
+* $\mu_i$ is the probability that patient $i$ has severe conditions,
+* $\eta_i$ is is the log-odds of the probability of severe disease,
+* $x_i$ is the indicator variable for \texttt{Anorexia}, where 1 indicates that the patient has anorexia and 0 indicates that the patient does not.
+
+Interpretation:
+
+* $\beta_0$ is the log-odds of a patient suffering from a severe respiratory disease if they do not have anorexia,
+* $\beta_1$ is the difference in log-odds of the probability of severe disease between an anorexic individual and one who does not suffer from anorexia.
+
+## Part (iii)
+
+The \texttt{summary()} function provides us with useful information to test whether anorexia is associated with the probability of severe disease. In particular, it provides the $z$-values and $p$-values for a Wald test of the hypothesis
+$$H_0: \beta_1 = 0 \quad \text{vs} \quad H_1: \beta_1 \neq 0.$$
+
+One asterisk (`*') indicates that we can reject the null hypothesis ($H_0: \beta_1 = 0$) at a 5% significance level. Hence, in this model, there is significant evidence that anorexia status is associated with the probability of severe disease.
+
+# Question 3
+
+## Part (i)
+
+This is similar to Question 2 Part (i), but instead of having \texttt{Anorexia} as explanatory variable, only \texttt{Temperature} will be used. The code implementation is very similar and is provided below.
+
+```{r, echo=TRUE}
+fitT = glm(Severe~Temperature, family=binomial, data=data)
+print(coef(fitT))
+print(summary(fitT))
+```
+
+## Part (ii)
+
+This is again similar to Question 2 Part (i), but with \texttt{Lymphocyte} as an explanatory variable instead of \texttt{Anorexia}. The implementation is provided below.
+
+```{r, echo=TRUE}
+fitL = glm(Severe~Lymphocyte, family=binomial, data=data)
+print(coef(fitL))
+print(summary(fitL))
+```
+
+## Conclusions
+
+Similarly to Question 2 Part (iii), we will use the information provided by the \texttt{summary()} function to assess whether there is significant evidence that temperature and lymphocytes level are associated with the probability of severe disease. For temperature, we can make the same observation as for anorexia, as one asterisk indicates that we reject the null hypothesis at a 5% significance level. However, lymphocyte is to be rejected at a 1% significance level because of the two asterisks.
+
+Therefore, there is significant evidence that both temperature and lymphocyte level are associated with the probability of severe disease for their respective models.
+
+# Question 4
+
+## Part (i)
+
+Let us now use R to fit a model including all three explanatory variable (without interactions) using logistic regression. This easily done using the Wilkinson-Roger notation as $\texttt{Severe} \sim \texttt{Anorexia} + \texttt{Temperature} + \texttt{Lymphocyte}$ and the \texttt{glm()} function.
+
+```{r, echo=TRUE}
+fit = glm(Severe~Anorexia+Temperature+Lymphocyte, family=binomial, data=data)
+print(coef(fit))
+print(summary(fit))
+```
+
+Again, using the $p$-values provided by the \texttt{summary()} function, we can perform a Wald test on each explanatory variable and observe that we reject the hypothesis that the lymphocyte level does not contribute to the probability at a 5% significance level, whilst we cannot reject the hypothesis that the other explanatory variables (including the intercept) do not contribute to the probability of severe disease. Therefore, we can conclude that only \texttt{Lymphocyte} has a significant association with the probability of severe disease in this model.
+
+## Part (ii)
+
+Comparing the results from Part (i) and Questions 2 and 3, we can say that only the level of lymphocytes significantly contributes to the probability of severe disease. This is seemingly in contrast with the conclusions from Question 2 Part (iii) and Question 3.
+
+However, the reason why \texttt{Anorexia} and \texttt{Temperature} have a significant association with the probability of severe disease in the simpler models was that they are the only variable in the models fitted above (excluding the intercept) and a model with only the intercept would be too simple. Moreover, fitting a GLM using only \texttt{Anorexia} or only \texttt{Temperature} tends to find some correlation between the previously mentioned explanatory variables and the severity of the disease. However, these models lacked the level of lymphocytes variable, which, from the model fitted in Part (i), is the only significant explanatory variable, as it is the only variable for which we can reject the hypothesis of it equating to zero at a 5% significance level. Hence, once the \texttt{Lymphocyte} variable was introduced, the other two lost their significance in the prediction.
+
+## Part (iii)
+
+We can now compare the simple models with the more complex one using the GLRT as the former are all nested in the latter. This is easily done in R with the \texttt{anova()} function.
+
+```{r, echo=TRUE}
+print(anova(fitA, fit, test="Chisq"))
+print(anova(fitT, fit, test="Chisq"))
+print(anova(fitL, fit, test="Chisq"))
+```
+
+The output of the comparisons confirms what has been said in Part (ii). We can see that both the model where only \texttt{Anorexia} is used as an explanatory variable and the one where only \texttt{Temperature} is used are to be rejected at a 5% significance level in favour of the more complex model (containing the lymphocytes level variable). The only model we cannot reject is the one with only the lymphocytes level variable. Therefore, this model will be used as a final one as there is no statistical evidence to choose the more complex one.
+
+# Question 5
+
+As stated in Question 4 Part (iii), the model with only \texttt{Lymphocytes} as explanatory variable will be used for prediction. The probability of severe disease for a non-anorexic patient with a temperature of 38°C and lymphocyte level of 1.3 billion cells per litre of blood is Approximately 17.80%. This can be calculated using the R function \texttt{predict.glm()}.
+
+```{r, echo=TRUE}
+print(predict.glm(fitL, data.frame(Anorexia="No", Temperature=38, Lymphocyte=1.3),
+                  type="response"))
+print(predict.glm(fit, data.frame(Anorexia="No", Temperature=38, Lymphocyte=1.3),
+                  type="response"))
+```
+
+For completeness, we also compared the results with the ones produced by the model with all variables, and as we can see the probabilities are not much different, meaning that the conclusion of Question 4 was indeed correct.
